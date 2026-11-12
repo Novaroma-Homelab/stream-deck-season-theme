@@ -205,9 +205,15 @@ export class IbBackdrop extends Base { protected kind = "ib-backdrop";
 @action({ UUID: `${P}.ib-pages` })
 export class IbPages extends Base { protected kind = "ib-pages";
   async draw(a: any, s: S) {
-    const e = eff(); const gl = [s.g1, s.g2, s.g3, s.g4, s.g5, s.g6, s.g7].filter((g) => g && g !== "-");
-    const list: string[] = gl.length ? gl : ["home", "headphones", "sun", "gradcap", "wrench", "gear", "plus"];
-    await paintBar(a, R.infoPagesStyled(e.c, list.map((g) => packMask(g)), list.slice(0, 5).map((g) => packUri(g, e)), Number(s.current) || 1, new Date(), s.style || "pill"));
+    const e = eff();
+    const base = [s.g1, s.g2, s.g3, s.g4, s.g5, s.g6, s.g7].filter((g) => g && g !== "-");
+    const more = String(s.more ?? "").split(/[\s,;]+/).filter((g) => PACK.includes(g));
+    let list: string[] = [...(base.length ? base : ["home", "headphones", "sun", "gradcap", "wrench", "gear"]), ...more];
+    const want = Math.floor(Number(s.count));
+    if (want >= 1) list = want <= list.length ? list.slice(0, want) : [...list, ...Array(want - list.length).fill("")];
+    list = list.slice(0, 24);
+    const cur = Math.max(1, Math.min(list.length, Number(s.current) || 1));
+    await paintBar(a, R.infoPagesStyled(e.c, list.map((g) => (g ? packMask(g) : "")), list.map((g) => (g ? packUri(g, e) : "")), cur, new Date(), s.style || "pill"));
   } }
 
 // ---------- Home Assistant ----------

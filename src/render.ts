@@ -29,8 +29,9 @@ const t = (x: number, y: number, s: number, fill: string, text: string, anchor =
   `<text x="${x}" y="${y}" font-family="${SERIF}" font-size="${s}" font-weight="${w}" text-anchor="${anchor}" letter-spacing="${ls}" fill="${fill}">${esc(text)}</text>`;
 
 export function infoPage(c: Col, name: string, count: number, cur: number) {
-  const n = Math.max(1, Math.min(8, count)), i = Math.max(1, Math.min(n, cur)) - 1;
-  const r = 2.6, gap = 11, aw = 20; const total = (n - 1) * 2 * r + aw + (n - 1) * gap; let x = (232 - total) / 2; let dots = "";
+  const n = Math.max(1, Math.min(24, count)), i = Math.max(1, Math.min(n, cur)) - 1;
+  const r = n > 12 ? 2 : 2.6, aw = n > 12 ? 14 : 20, gap = n > 16 ? 5 : n > 12 ? 7 : n > 8 ? 9 : 11;
+  const total = (n - 1) * 2 * r + aw + (n - 1) * gap; let x = (232 - total) / 2; let dots = "";
   for (let k = 0; k < n; k++) {
     if (k === i) { dots += `<rect x="${x}" y="${40 - r}" width="${aw}" height="${2 * r}" rx="${r}" fill="${c.main}"/>`; x += aw + gap; }
     else { dots += `<circle cx="${x + r}" cy="40" r="${r}" fill="${c.muted}" opacity=".7"/>`; x += 2 * r + gap; }
@@ -106,37 +107,43 @@ export function backdropKey(c: Col, style = "boegen", ph = -1) {
   return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/><rect width="144" height="6" fill="${c.main}"/>${style === "flaeche" ? "" : arches(c, 144, 144, 4, 38, ph)}</svg>`);
 }
 
-/** Seitenanzeige mit Symbolen: ein Bild pro Seite, die aktuelle voll sichtbar mit Balken darunter, die anderen gedämpft. */
-export function infoPageIcons(c: Col, imgs: string[], cur: number) {
-  const n = Math.max(1, Math.min(5, imgs.length)), size = 30, gap = 18, total = n * size + (n - 1) * gap; let x = (232 - total) / 2, o = "";
-  for (let k = 0; k < n; k++) {
-    const on = k === cur - 1;
-    o += `<g opacity="${on ? 1 : 0.4}">${image(imgs[k], x, 6, size)}</g>`;
-    o += on ? `<rect x="${x + 3}" y="41" width="${size - 6}" height="4" rx="2" fill="${c.main}"/>` : `<circle cx="${x + size / 2}" cy="43" r="2" fill="${c.muted}" opacity=".7"/>`;
-    x += size + gap;
+/** Bei vielen Seiten wird es eng: erst schrumpfen die Symbole, dann zeigt nur noch die aktuelle Seite ihr Symbol und die anderen werden zu Punkten. */
+function fitMarks(n: number, W: number, size: number, gap: number) {
+  for (const sz of [size, 26, 22, 18]) {
+    if (sz > size) continue;
+    if (n === 1 || n * sz + (n - 1) * 4 <= W) return { sz, g: n === 1 ? 0 : Math.min(gap, (W - n * sz) / (n - 1)), compact: false, slot: 0 };
   }
-  return bar(c, o);
+  return { sz: size, g: 0, compact: true, slot: Math.max(4, Math.min(14, (W - size - 8) / (n - 1))) };
+}
+const dotAt = (c: Col, cx: number, cy: number, r = 2.6) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c.muted}" opacity=".7"/>`;
+/** Eine Reihe Seitenmarken: Bild pro Seite, die aktuelle voll sichtbar mit Balken, die anderen gedämpft. Leere Bilder werden zu Punkten. */
+function pageMarks(c: Col, imgs: string[], cur: number, x0: number, W: number, size: number, gap: number, y: number, yb: number, centre: boolean) {
+  const n = imgs.length, f = fitMarks(n, W, size, gap); let o = "";
+  const total = f.compact ? (n - 1) * f.slot + size + 8 : n * f.sz + (n - 1) * f.g;
+  let x = centre ? x0 + (W - total) / 2 : x0;
+  imgs.forEach((u, k) => {
+    const on = k === cur - 1, sz = f.sz;
+    if (f.compact && !on) { o += dotAt(c, x + f.slot / 2, y + size / 2, Math.min(2.6, f.slot / 2 - 0.5)); x += f.slot; return; }
+    if (!u) o += on ? "" : dotAt(c, x + sz / 2, y + sz / 2);
+    else o += `<g opacity="${on ? 1 : 0.4}">${image(u, x, y, sz)}</g>`;
+    o += on ? `<rect x="${x + sz * 0.15}" y="${yb}" width="${sz * 0.7}" height="3.5" rx="1.75" fill="${c.main}"/>` : `<circle cx="${x + sz / 2}" cy="${yb + 1.75}" r="1.8" fill="${c.muted}" opacity=".7"/>`;
+    x += sz + (f.compact ? 8 : f.g);
+  });
+  return o;
+}
+export function infoPageIcons(c: Col, imgs: string[], cur: number) {
+  return bar(c, pageMarks(c, imgs, cur, 8, 216, 30, 18, 6, 41, true));
 }
 
 const hm = (d: Date) => String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-const pageMarks = (c: Col, imgs: string[], cur: number, x0: number, size: number, gap: number, y: number, yb: number) => {
-  let x = x0, o = "";
-  imgs.slice(0, 5).forEach((u, k) => {
-    const on = k === cur - 1;
-    o += `<g opacity="${on ? 1 : 0.4}">${image(u, x, y, size)}</g>` + (on ? `<rect x="${x + size * 0.15}" y="${yb}" width="${size * 0.7}" height="3.5" rx="1.75" fill="${c.main}"/>` : `<circle cx="${x + size / 2}" cy="${yb + 1.75}" r="1.8" fill="${c.muted}" opacity=".7"/>`);
-    x += size + gap;
-  });
-  return o;
-};
 /** Variante 1: Symbole links, große Uhr rechts mit Datum. */
 export function infoPagesClockSide(c: Col, imgs: string[], cur: number, d: Date) {
-  const n = Math.min(5, imgs.length), size = n > 3 ? 24 : 28, gap = n > 3 ? 7 : 10;
-  return bar(c, pageMarks(c, imgs, cur, 10, size, gap, 8, 40) + t(222, 31, 26, c.text, hm(d), "end") + t(222, 45, 10, c.muted, `${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`, "end", "normal"));
+  const n = imgs.length, size = n > 3 ? 24 : 28, gap = n > 3 ? 7 : 10;
+  return bar(c, pageMarks(c, imgs, cur, 10, 134, size, gap, 8, 40, false) + t(222, 31, 26, c.text, hm(d), "end") + t(222, 45, 10, c.muted, `${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`, "end", "normal"));
 }
 /** Variante 2: kleine Uhr oben mittig, Symbole darunter. */
 export function infoPagesClockTop(c: Col, imgs: string[], cur: number, d: Date) {
-  const n = Math.min(5, imgs.length), size = 22, gap = 16, total = n * size + (n - 1) * gap;
-  return bar(c, t(116, 17, 13, c.text, `${hm(d)} · ${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`) + pageMarks(c, imgs, cur, (232 - total) / 2, size, gap, 21, 45));
+  return bar(c, t(116, 17, 13, c.text, `${hm(d)} · ${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`) + pageMarks(c, imgs, cur, 8, 216, 22, 16, 21, 45, true));
 }
 
 /** Symbol in beliebiger Farbe über seine Maske zeichnen. */
@@ -146,12 +153,18 @@ const tinted = (mask: string, x: number, y: number, size: number, fill: string) 
   return `<mask id="${id}" x="${x}" y="${y}" width="${size}" height="${size}" maskUnits="userSpaceOnUse"><image href="${mask}" x="${x}" y="${y}" width="${size}" height="${size}"/></mask><rect x="${x}" y="${y}" width="${size}" height="${size}" fill="${fill}" mask="url(#${id})"/>`;
 };
 /** Pille wie in der App: abgerundete Leiste, aktive Seite als helle Pille mit Symbol in Gegenfarbe. */
-function pill(c: Col, masks: string[], cur: number, x0: number, y0: number, cell: number, h: number, icon: number) {
-  const n = masks.length, w = n * cell + 8; let o = `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${h / 2}" fill="${c.muted}" fill-opacity=".16"/>`;
+function pill(c: Col, masks: string[], cur: number, x0: number, y0: number, cell: number, h: number, icon: number, W: number, centre: boolean) {
+  const n = masks.length; let cl = cell, ic = icon, compact = false, slot = 0;
+  if (n * cl + 8 > W) { cl = Math.floor((W - 8) / n); if (cl >= 20) ic = Math.max(12, cl - 8); else { compact = true; cl = cell; slot = Math.max(4.5, Math.min(12, (W - 8 - cell) / Math.max(1, n - 1))); } }
+  const w = (compact ? (n - 1) * slot + cl : n * cl) + 8, xs = centre ? x0 + (W - w) / 2 : x0;
+  let o = `<rect x="${xs}" y="${y0}" width="${w}" height="${h}" rx="${h / 2}" fill="${c.muted}" fill-opacity=".16"/>`, cx = xs + 4;
   masks.forEach((m, k) => {
-    const cx = x0 + 4 + k * cell, on = k === cur - 1;
-    if (on) o += `<rect x="${cx + 1}" y="${y0 + 3}" width="${cell - 2}" height="${h - 6}" rx="${(h - 6) / 2}" fill="${c.main}"/>`;
-    o += tinted(m, cx + (cell - icon) / 2, y0 + (h - icon) / 2, icon, on ? c.bg : c.muted);
+    const on = k === cur - 1, wd = compact && !on ? slot : cl;
+    if (on) o += `<rect x="${cx + 1}" y="${y0 + 3}" width="${wd - 2}" height="${h - 6}" rx="${(h - 6) / 2}" fill="${c.main}"/>`;
+    if (compact && !on) o += dotAt(c, cx + wd / 2, y0 + h / 2, Math.min(2.2, wd / 2 - 0.5));
+    else if (!m) o += dotAt(c, cx + wd / 2, y0 + h / 2, 3).replace(c.muted, on ? c.bg : c.muted);
+    else o += tinted(m, cx + (wd - ic) / 2, y0 + (h - ic) / 2, ic, on ? c.bg : c.muted);
+    cx += wd;
   });
   return { svg: o, w };
 }
@@ -160,9 +173,9 @@ export function infoPagesStyled(c: Col, masks: string[], imgs: string[], cur: nu
   if (style.startsWith("tiles")) {
     return clock === "rechts" ? infoPagesClockSide(c, imgs, cur, d) : clock === "oben" ? infoPagesClockTop(c, imgs, cur, d) : infoPageIcons(c, imgs, cur);
   }
-  if (clock === "rechts") { const m = masks.slice(0, 5); const p = pill(c, m, cur, 8, 9, 28, 32, 18); return bar(c, p.svg + t(222, 31, 26, c.text, hm(d), "end") + t(222, 45, 10, c.muted, `${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`, "end", "normal")); }
-  if (clock === "oben") { const m = masks.slice(0, 7); const w = m.length * 26 + 8; const p = pill(c, m, cur, (232 - w) / 2, 22, 26, 24, 15); return bar(c, t(116, 17, 13, c.text, `${hm(d)} · ${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`) + p.svg); }
-  const m = masks.slice(0, 7); const w = m.length * 30 + 8; const p = pill(c, m, cur, (232 - w) / 2, 10, 30, 34, 20); return bar(c, p.svg);
+  if (clock === "rechts") { const p = pill(c, masks, cur, 8, 9, 28, 32, 18, 142, false); return bar(c, p.svg + t(222, 31, 26, c.text, hm(d), "end") + t(222, 45, 10, c.muted, `${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`, "end", "normal")); }
+  if (clock === "oben") { const p = pill(c, masks, cur, 8, 22, 26, 24, 15, 216, true); return bar(c, t(116, 17, 13, c.text, `${hm(d)} · ${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`) + p.svg); }
+  const p = pill(c, masks, cur, 8, 10, 30, 34, 20, 216, true); return bar(c, p.svg);
 }
 
 /** Taste für Home Assistant: an = gefüllte Fläche mit Symbol in Gegenfarbe, aus = ruhige Fläche, unbekannt = gestrichelter Rand. Der Zustand steht immer auch als Text. */
