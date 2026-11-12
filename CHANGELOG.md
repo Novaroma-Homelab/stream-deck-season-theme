@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Optional fixed icon colour (season and light/dark) in the global settings; the background and infobar keep following the automatic season.
+
 ## 1.0.0
 
 - First release.

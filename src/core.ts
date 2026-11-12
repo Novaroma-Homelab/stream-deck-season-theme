@@ -44,6 +44,12 @@ export function watchDevices() {
   try { streamDeck.devices.forEach(upd); streamDeck.devices.onDeviceDidConnect((ev: any) => { upd(ev.device); void refreshAll(); }); } catch (e) { streamDeck.logger.warn(String(e)); }
 }
 
+/** Optional feste Symbolfarbe (Jahreszeit und Hell/Dunkel); alles andere folgt weiter der Automatik. */
+export function iconEff(e: ReturnType<typeof eff>) {
+  const gs = String(globals.iconSeason ?? "auto"), gm = String(globals.iconMode ?? "auto");
+  if (gs === "auto" && gm === "auto") return e;
+  return effective({ season: gs === "auto" ? e.season : (gs as Pref["season"]), theme: gm === "auto" ? e.mode : (gm as Pref["theme"]) });
+}
 let pref: Pref = { season: "auto", theme: "auto" };
 export const getPref = () => pref;
 export const eff = () => effective(pref);
@@ -83,6 +89,7 @@ export function packMask(glyph: string): string {
 
 /** Bild für eine Taste mit Pack-Symbol: die Kachel des Icon-Pakets, oder bei gewähltem Deck-Hintergrund eine Taste mit Hintergrund. */
 export function tileImg(glyph: string, e = eff(), a?: any): string {
+  e = iconEff(e);
   const co = a?.coordinates ?? { column: 0, row: 0 };
   return getBg() === "plain" ? packFile(glyph, e) : bgKey(e.c, packMask(PACK_GLYPHS.includes(glyph) ? glyph : "star"), co.column ?? 0, co.row ?? 0);
 }
