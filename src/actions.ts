@@ -2,7 +2,7 @@ import streamDeck, { action, SingletonAction, WillAppearEvent, WillDisappearEven
 import { execFile } from "node:child_process";
 import http from "node:http";
 import https from "node:https";
-import { eff, getPref, packFile, packUri, packMask, register, unregister, setPref, refreshAll } from "./core";
+import { eff, getPref, tileImg, packFile, packUri, packMask, register, unregister, setPref, refreshAll } from "./core";
 import { SEASON_ORDER, DAYS } from "./theme";
 import { SEASON_LABEL, SeasonKey } from "./palette";
 import * as R from "./render";
@@ -46,7 +46,7 @@ export class SeasonKey_ extends Base {
   protected kind = "season";
   async draw(a: any, s: S) {
     const e = eff(), p = getPref(), g = { standard: "arch", fruehling: "flower", sommer: "sun", herbst: "leaf", winter: "snowflake" }[e.season];
-    await a.setImage(packFile(g, e)); await a.setTitle(e.label + (p.season === "auto" ? "\n" + T("Auto", "Auto") : ""));
+    await a.setImage(tileImg(g, e, a)); await a.setTitle(e.label + (p.season === "auto" ? "\n" + T("Auto", "Auto") : ""));
   }
   override async onKeyDown(ev: KeyDownEvent<S>) {
     const s = ev.payload.settings, mode = s.mode ?? "cycle", p = getPref();
@@ -61,7 +61,7 @@ export class ThemeKey extends Base {
   protected kind = "theme";
   async draw(a: any, s: S) {
     const e = eff(), p = getPref();
-    await a.setImage(packFile(e.mode === "hell" ? "sun" : "moon", e)); await a.setTitle((e.mode === "hell" ? T("Hell", "Light") : T("Dunkel", "Dark")) + (p.theme === "auto" ? "\n" + T("Auto", "Auto") : ""));
+    await a.setImage(tileImg(e.mode === "hell" ? "sun" : "moon", e, a)); await a.setTitle((e.mode === "hell" ? T("Hell", "Light") : T("Dunkel", "Dark")) + (p.theme === "auto" ? "\n" + T("Auto", "Auto") : ""));
   }
   override async onKeyDown(ev: KeyDownEvent<S>) {
     const s = ev.payload.settings, mode = s.mode ?? "cycle", p = getPref();
@@ -77,7 +77,7 @@ export class Launcher extends Base {
   async draw(a: any, s: S) {
     const e = eff(), g = s.glyph || "star";
     // Bild aus dem Novaroma-Icon-Paket passend zu Jahreszeit und Thema, sonst eigenes Linien-Symbol
-    if (PACK.includes(g) && a.isKey?.()) { await a.setImage(`imgs/pack/${e.season}-${e.mode === "hell" ? "light" : "dark"}-${g}.png`); await a.setTitle(s.title ?? ""); }
+    if (PACK.includes(g) && a.isKey?.()) { await a.setImage(tileImg(g, e, a)); await a.setTitle(s.title ?? ""); }
     else { await a.setTitle(""); setKey(a, R.key(e.c, g, s.title ?? "")); }
   }
   override async onKeyDown(ev: KeyDownEvent<S>) {
@@ -116,7 +116,7 @@ export class TimerKey extends Base {
     timer.work = Number(s.work) || 25; timer.brk = Number(s.brk) || 5;
     const e = eff(), l = timerLeft(), mm = String(Math.floor(l / 60)).padStart(2, "0"), ss = String(l % 60).padStart(2, "0");
     const g = timer.phase === "idle" ? "stopwatch" : timer.paused ? "pause" : timer.phase === "break" ? "coffee" : "hourglass";
-    await a.setImage(packFile(g, e)); await a.setTitle(timer.phase === "idle" ? T("Lernzeit", "Study") : `${mm}:${ss}`);
+    await a.setImage(tileImg(g, e, a)); await a.setTitle(timer.phase === "idle" ? T("Lernzeit", "Study") : `${mm}:${ss}`);
   }
   override async onWillAppear(ev: WillAppearEvent<S>) { timerKeys.add(ev.action); await super.onWillAppear(ev); }
   override onWillDisappear(ev: WillDisappearEvent<S>) { timerKeys.delete(ev.action); super.onWillDisappear(ev); }
@@ -191,7 +191,7 @@ export class IbHomelab extends Base { protected kind = "ib-homelab";
 // ---------- neu: Symbol-Taste und Infobar mit Symbol ----------
 @action({ UUID: `${P}.icon` })
 export class IconKey extends Base { protected kind = "icon";
-  async draw(a: any, s: S) { await a.setImage(packFile(s.glyph || "star")); await a.setTitle(s.title ?? ""); }
+  async draw(a: any, s: S) { await a.setImage(tileImg(s.glyph || "star", eff(), a)); await a.setTitle(s.title ?? ""); }
   override async onKeyDown(ev: KeyDownEvent<S>) { const t = (ev.payload.settings.target ?? "").trim(); if (t) { try { await streamDeck.system.openUrl(t); } catch { await ev.action.showAlert(); } } } }
 
 @action({ UUID: `${P}.ib-icon` })
@@ -216,6 +216,62 @@ export class IbPages extends Base { protected kind = "ib-pages";
     await paintBar(a, R.infoPagesStyled(e.c, list.map((g) => (g ? packMask(g) : "")), list.map((g) => (g ? packUri(g, e) : "")), cur, new Date(), s.style || "pill"));
   } }
 
+// ---------- Auto-Szenen: Infoseiten wechseln selbst, mit Übergang ----------
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+@action({ UUID: `${P}.ib-scenes` })
+export class IbScenes extends Base { protected kind = "ib-scenes";
+  private st = new Map<string, { cur: string; since: number; busy: boolean; timer?: ReturnType<typeof setInterval>; last: string }>();
+  override async onWillAppear(ev: WillAppearEvent<S>) {
+    const a = ev.action; layoutSet.delete(a.id); this.inst.set(a.id, { a, s: ev.payload.settings });
+    const st = { cur: "clock", since: Date.now(), busy: false, last: "" } as any; this.st.set(a.id, st);
+    register(this.kind + a.id, async () => { await this.tick(a); });
+    await this.tick(a); st.timer = setInterval(() => { void this.tick(a); }, 1000);
+  }
+  override onWillDisappear(ev: WillDisappearEvent<S>) { const st = this.st.get(ev.action.id); if (st?.timer) clearInterval(st.timer); this.st.delete(ev.action.id); layoutSet.delete(ev.action.id); this.inst.delete(ev.action.id); unregister(this.kind + ev.action.id); }
+  async draw(a: any) { const st = this.st.get(a.id); if (st) st.last = ""; await this.tick(a); }
+  private on = (s: S, k: string) => s[k] !== false && s[k] !== "false";
+  /** Inneres SVG einer Szene, oder null, wenn sie gerade nichts zu zeigen hat. */
+  private async inner(id: string, s: S): Promise<string | null> {
+    const e = eff(), d = new Date();
+    switch (id) {
+      case "clock": return R.scene.clock(e.c, d, e.label);
+      case "season": return R.scene.season(e.c, e.season, d, packUri({ standard: "arch", fruehling: "flower", sommer: "sun", herbst: "leaf", winter: "snowflake" }[e.season], e));
+      case "year": return R.scene.year(e.c, d);
+      case "countdown": { const t = s.date ? new Date(s.date + "T00:00:00") : null; return t && !isNaN(+t) ? R.scene.countdown(e.c, s.label ?? "", t, d) : null; }
+      case "timer": return timer.phase === "idle" ? null : R.scene.timer(e.c, timer.phase, timerLeft(), timer.total);
+      case "ha": { if (!s.entity || !haReady()) return null; const v = await haState(String(s.entity)); return R.scene.value(e.c, s.haLabel || String(s.entity), v === "unknown" ? "?" : v, s.unit ?? ""); }
+    }
+    return null;
+  }
+  private async tick(a: any) { try { await this.tick2(a); } catch (e) { streamDeck.logger.error("Auto-Szenen: " + String((e as Error)?.stack ?? e)); console.error("SCENES", e); } }
+  private async tick2(a: any) {
+    const st = this.st.get(a.id); if (!st || st.busy || !a.isNeoInfobar?.()) return;
+    const s = this.cfg(a), e = eff(), ids = ["clock", "season", "year", "countdown", "timer", "ha"].filter((i) => this.on(s, "s_" + i));
+    const ivl = Math.max(3, Math.min(120, Math.floor(Number(s.interval)) || 8)) * 1000;
+    const show = async (id: string) => { const x = await this.inner(id, s); return x; };
+    let cur = ids.includes(st.cur) ? st.cur : ids[0] ?? "clock";
+    let curInner = await show(cur);
+    if (curInner === null) { const alt = ids.find((i) => i !== cur); if (alt) { cur = alt; curInner = await show(cur); } }
+    if (curInner === null) curInner = R.scene.clock(e.c, new Date(), e.label);
+    if (Date.now() - st.since >= ivl) {
+      for (let k = 1; k <= ids.length; k++) {
+        const nx = ids[(ids.indexOf(cur) + k) % ids.length]; if (nx === cur) break;
+        const ni = await show(nx); if (ni === null) continue;
+        st.busy = true;
+        try {
+          const mode = s.transition || "slide";
+          if (mode !== "none") for (let f = 1; f <= 5; f++) { await paintBar(a, R.transition(e.c, curInner, ni, f / 5, mode)); await sleep(110); }
+          st.cur = nx; st.since = Date.now(); st.last = "";
+          await paintBar(a, R.sceneBar(e.c, ni)); st.last = R.sceneBar(e.c, ni);
+        } finally { st.busy = false; }
+        return;
+      }
+      st.since = Date.now();
+    }
+    st.cur = cur; const img = R.sceneBar(e.c, curInner);
+    if (img !== st.last) { st.last = img; await paintBar(a, img); }
+  } }
+
 // ---------- Home Assistant ----------
 @action({ UUID: `${P}.ha-toggle` })
 export class HaToggle extends Base { protected kind = "ha-toggle";
@@ -235,7 +291,7 @@ export class HaToggle extends Base { protected kind = "ha-toggle";
 
 @action({ UUID: `${P}.ha-service` })
 export class HaService extends Base { protected kind = "ha-service";
-  async draw(a: any, s: S) { const e = eff(); await a.setImage(packFile(s.glyph || "bolt", e)); await a.setTitle(s.title ?? ""); }
+  async draw(a: any, s: S) { const e = eff(); await a.setImage(tileImg(s.glyph || "bolt", e, a)); await a.setTitle(s.title ?? ""); }
   override async onKeyDown(ev: KeyDownEvent<S>) {
     const s = ev.payload.settings; let data: Record<string, unknown> = {};
     if (String(s.entity ?? "").trim()) data.entity_id = String(s.entity).trim();

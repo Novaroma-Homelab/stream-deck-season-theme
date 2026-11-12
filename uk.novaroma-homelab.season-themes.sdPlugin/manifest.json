@@ -148,6 +148,21 @@
       "PropertyInspectorPath": "ui/ib-pages.html"
     },
     {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-scenes",
+      "Name": "Infobar: Auto Scenes",
+      "Tooltip": "Info screens that switch by themselves",
+      "Icon": "imgs/actions/ib-scenes",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-scenes"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-scenes.html"
+    },
+    {
       "UUID": "uk.novaroma-homelab.season-themes.ib-page",
       "Name": "Infobar: Page Name",
       "Tooltip": "Page name with dots",

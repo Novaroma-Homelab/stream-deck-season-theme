@@ -8,4 +8,7 @@
 - Launcher key for links and apps, study timer, icon key from the Season Icons pack.
 - Home Assistant keys: toggle and service call, with state shown on the key.
 - English and German interface.
+- Deck wallpaper: one picture (aqueduct scene with sun or moon, or soft waves) across all keys and the infobar, sliding, fading or rising to the next season or time of day.
+- Infobar auto scenes: clock, season, moon and year, countdown, study timer and a Home Assistant value, switching by themselves with a transition.
+- Deck background styles for all keys and infobars: arches, glow, fine lines, dots.
 - Page indicators work with any number of pages (up to 24): icons shrink and finally turn into dots, extra page icons can be typed in as names.

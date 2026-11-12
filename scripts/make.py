@@ -7,7 +7,9 @@ SEASONS = [("standard","Default"),("fruehling","Spring"),("sommer","Summer"),("h
 NAME_EN = {g: g.replace("-", " ").title() for g in PACK}
 NAME_EN.update(gradcap="Graduation cap", pullrequest="Pull request", mic="Microphone", volume="Volume", home="Home", mute="Mute", eye="Eye", blank="Blank")
 
+BG_GLOBAL = '<sdpi-item label="Deck background"><sdpi-select setting="background" global default="plain"><option value="plain">Plain</option><option value="arches">Arches</option><option value="glow">Glow</option><option value="lines">Fine lines</option><option value="dots">Dots</option><option value="wallpaper">Wallpaper (one picture across all keys and the infobar)</option></sdpi-select></sdpi-item><sdpi-item label="Wallpaper style"><sdpi-select setting="wallStyle" global default="scene"><option value="scene">Aqueduct scene with sun or moon</option><option value="waves">Soft waves</option></sdpi-select></sdpi-item><sdpi-item label="Wallpaper switch"><sdpi-select setting="wallTransition" global default="slide"><option value="slide">Slide</option><option value="fade">Fade</option><option value="rise">Rise</option><option value="none">None</option></sdpi-select></sdpi-item>'
 def PI(fields):
+    fields = fields + BG_GLOBAL
     return f'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script></head><body>{fields}</body></html>'
 def sel(setting, label, opts, required=True, default=None):
     o = "".join(f'<option value="{v}">{t}</option>' for v, t in opts)
@@ -22,6 +24,7 @@ def num(setting, label, default): return txt(setting, label, str(default), patte
 glyph_opts = [(g, NAME_EN[g]) for g in PACK]
 season_opts = [(k, n) for k, n in SEASONS]
 page_styles = [("pill","Pill"),("pill-clock-right","Pill with clock on the right"),("pill-clock-top","Pill with clock on top"),("tiles","Tiles"),("tiles-clock-right","Tiles with clock on the right"),("tiles-clock-top","Tiles with clock on top")]
+CBX = "".join(f'<sdpi-item label="{l}"><sdpi-checkbox setting="s_{k}" label="Show" default="true"></sdpi-checkbox></sdpi-item>' for k, l in [("clock","Screen: Clock and date"),("season","Screen: Season progress"),("year","Screen: Moon and year"),("countdown","Screen: Countdown"),("timer","Screen: Study timer (only while running)"),("ha","Screen: Home Assistant value")])
 HA_GLOBAL = ('<sdpi-item label="Home Assistant URL"><sdpi-textfield setting="haUrl" global placeholder="http://homeassistant.local:8123" pattern="https?://.+"></sdpi-textfield></sdpi-item>'
              '<sdpi-item label="Access token"><sdpi-password setting="haToken" global placeholder="Long-lived access token"></sdpi-password></sdpi-item>')
 PIS = {
@@ -33,6 +36,10 @@ PIS = {
  "ib-icon": PI(sel("glyph","Icon",glyph_opts,default="star") + txt("line1","Line 1","Novaroma") + txt("line2","Line 2 (optional)","")),
  "ib-backdrop": PI(sel("style","Style",[("boegen","Aqueduct arches"),("flaeche","Plain")])),
  "ib-pages": PI(sel("style","Style",page_styles) + num("current","Current page number",1) + num("count","Number of pages (empty = number of icons)","") + "".join(sel(f"g{i}",f"Page {i} icon",[("-","(none)")]+glyph_opts, required=False, default=["home","headphones","sun","gradcap","wrench","gear","-"][i-1]) for i in range(1,8)) + txt("more","More page icons (names, comma separated)","star, heart, plug", pattern="[a-z0-9, -]*")),
+ "ib-scenes": PI(sel("transition","Transition",[("slide","Slide"),("fade","Fade"),("rise","Rise"),("none","None")]) + num("interval","Seconds per screen",8)
+   + CBX
+   + txt("label","Countdown title","Exam") + txt("date","Countdown date","2027-06-30",pattern="\\d{4}-\\d{2}-\\d{2}")
+   + HA_GLOBAL + txt("entity","Value entity","sensor.living_room_temperature",pattern="([a-z_]+\\.[a-z0-9_]+)?") + txt("haLabel","Value title","Living room") + txt("unit","Value unit","°C")),
  "ib-page": PI(txt("name","Page name","Home") + num("current","Current page",1) + num("count","Number of pages (up to 24)",3)),
  "ha-toggle": PI(HA_GLOBAL + txt("entity","Entity","light.living_room",pattern="[a-z_]+\\.[a-z0-9_]+",required=True) + txt("title","Title","Light") + sel("glyph","Icon",glyph_opts,default="bolt")),
  "ha-service": PI(HA_GLOBAL + txt("service","Service","scene.turn_on",pattern="[a-z_]+\\.[a-z_]+",required=True) + txt("entity","Entity (optional)","scene.movie") + txt("data","Extra data (JSON, optional)","{&quot;brightness&quot;: 120}",rows=3) + txt("title","Title","Scene") + sel("glyph","Icon",glyph_opts,default="bolt")),
@@ -53,6 +60,7 @@ ACT = [
  ("ha-toggle","Home Assistant: Toggle","Toggle an entity and show its state","Home Assistant: Schalten","Entität schalten und Zustand anzeigen","Keypad",True),
  ("ha-service","Home Assistant: Service","Call a service, scene or script","Home Assistant: Dienst","Dienst, Szene oder Skript ausführen","Keypad",True),
  ("ib-pages","Infobar: Pages & Clock","Page icons with optional clock","Infobar: Seiten und Uhr","Seitensymbole, optional mit Uhr","Neo",True),
+ ("ib-scenes","Infobar: Auto Scenes","Info screens that switch by themselves","Infobar: Auto-Szenen","Infoseiten wechseln selbst mit Übergang","Neo",True),
  ("ib-page","Infobar: Page Name","Page name with dots","Infobar: Seitenname","Seitenname mit Punkten","Neo",True),
  ("ib-icon","Infobar: Icon & Text","Icon with one or two lines","Infobar: Symbol und Text","Symbol mit ein oder zwei Zeilen","Neo",True),
  ("ib-clock","Infobar: Clock","Time, date and week","Infobar: Uhr","Uhrzeit, Datum und Kalenderwoche","Neo",False),
@@ -91,7 +99,7 @@ def icon(body): return f'<svg xmlns="http://www.w3.org/2000/svg" width="20" heig
 clock = '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
 body = {"season":gl("fruehling"),"theme":gl("sun"),"launcher":gl("star"),"timer":gl("gradcap"),"icon":gl("star"),"ha-toggle":gl("bolt"),"ha-service":gl("bolt"),"ib-icon":gl("star"),"ib-backdrop":gl("standard"),
  "ib-pages":'<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',"ib-page":'<circle cx="6" cy="12" r="1.8"/><rect x="10" y="10.2" width="6" height="3.6" rx="1.8"/><circle cx="20" cy="12" r="1.8"/>',
- "ib-clock":clock,"ib-season":gl("standard"),"ib-homelab":gl("server"),"ib-countdown":gl("calendar"),"ib-timer":gl("play"),"ib-text":'<path d="M5 7h14M12 7v12M9 19h6"/>',"ib-banner":gl("standard")}
+ "ib-clock":clock,"ib-scenes":'<rect x="3" y="6" width="12" height="12" rx="2"/><path d="M18 8l3 4-3 4"/>',"ib-season":gl("standard"),"ib-homelab":gl("server"),"ib-countdown":gl("calendar"),"ib-timer":gl("play"),"ib-text":'<path d="M5 7h14M12 7v12M9 19h6"/>',"ib-banner":gl("standard")}
 for k, b in body.items(): open(f"{D}/imgs/actions/{k}.svg","w").write(icon(b))
 open(f"{D}/imgs/category.svg","w").write(icon(gl("standard")))
 big = '<svg xmlns="http://www.w3.org/2000/svg" width="288" height="288" viewBox="0 0 288 288"><rect width="288" height="288" rx="44" fill="#5e282c"/><g transform="translate(54 54) scale(7.5)" fill="none" stroke="#F6EFE3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">%s</g></svg>' % gl("standard")

@@ -2,7 +2,7 @@ import { GLYPHS } from "./glyphs";
 import { T } from "./i18n";
 import { Col } from "./palette";
 import { DAYS, MONTHS, isoWeek, seasonProgress, SEASON_ORDER } from "./theme";
-import { SEASON_LABEL, SeasonKey } from "./palette";
+import { SEASON_LABEL, SeasonKey, PAL } from "./palette";
 
 export const uri = (svg: string) => "data:image/svg+xml;charset=utf8," + encodeURIComponent(svg);
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -18,14 +18,19 @@ export function key(c: Col, g: string, label: string, badge = "", accent = c.mai
   const lab = label ? `<text x="72" y="130" font-family="${SERIF}" font-size="17" font-weight="bold" text-anchor="middle" fill="${c.muted}">${esc(label)}</text>` : "";
   const bad = badge ? `<g><rect x="88" y="10" width="48" height="22" rx="11" fill="${c.ink}"/><text x="112" y="26" font-family="${SERIF}" font-size="14" font-weight="bold" text-anchor="middle" fill="${c.bg}">${esc(badge)}</text></g>` : "";
   const gy = label ? 20 : 30, gs = label ? 78 : 84, gx = (144 - gs) / 2;
-  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/><rect x="0" y="0" width="144" height="6" fill="${accent}"/>${glyph(g, gx, gy + 6, gs, accent, 1.7)}${lab}${bad}</svg>`);
+  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/>${bgLayerKey(c, BG)}<rect x="0" y="0" width="144" height="6" fill="${accent}"/>${glyph(g, gx, gy + 6, gs, accent, 1.7)}${lab}${bad}</svg>`);
 }
 
 /** Infobar 232×50. */
-export function bar(c: Col, inner: string): string {
-  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="232" height="50" viewBox="0 0 232 50"><rect width="232" height="50" fill="${c.bg}"/><rect width="232" height="3" fill="${c.main}"/>${inner}</svg>`);
+/** Hintergrund für das ganze Deck, gilt für alle Tasten und Infobars (globale Einstellung). */
+let BG = "plain";
+export const setBg = (style: string) => { BG = style || "plain"; };
+export const getBg = () => BG;
+export function bar(c: Col, inner: string, under?: string): string {
+  if (under === undefined) under = bgLayer(c, BG);
+  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="232" height="50" viewBox="0 0 232 50"><rect width="232" height="50" fill="${c.bg}"/>${under}<rect width="232" height="3" fill="${c.main}"/>${inner}</svg>`);
 }
-const t = (x: number, y: number, s: number, fill: string, text: string, anchor = "middle", w = "bold", ls = 0) =>
+export const t = (x: number, y: number, s: number, fill: string, text: string, anchor = "middle", w = "bold", ls = 0) =>
   `<text x="${x}" y="${y}" font-family="${SERIF}" font-size="${s}" font-weight="${w}" text-anchor="${anchor}" letter-spacing="${ls}" fill="${fill}">${esc(text)}</text>`;
 
 export function infoPage(c: Col, name: string, count: number, cur: number) {
@@ -101,7 +106,7 @@ function arches(c: Col, w: number, h: number, n: number, rise: number, ph: numbe
   return o;
 }
 export function backdropBar(c: Col, style: string, ph = -1) {
-  return bar(c, style === "flaeche" ? "" : arches(c, 232, 50, 10, 14, ph));
+  return bar(c, style === "flaeche" ? "" : arches(c, 232, 50, 10, 14, ph), "");
 }
 export function backdropKey(c: Col, style = "boegen", ph = -1) {
   return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/><rect width="144" height="6" fill="${c.main}"/>${style === "flaeche" ? "" : arches(c, 144, 144, 4, 38, ph)}</svg>`);
@@ -186,4 +191,152 @@ export function haKey(c: Col, mask: string, label: string, state: "on" | "off" |
   const body = `<rect x="3" y="3" width="138" height="138" rx="26" fill="${fill}" stroke="${c.main}" stroke-width="${on ? 0 : 3}"${unk ? ' stroke-dasharray="8 6"' : ""}/>` +
     tinted(mask, 34, 14, 76, ic) + `<text x="72" y="128" font-family="${SERIF}" font-size="20" font-weight="bold" text-anchor="middle" fill="${tx}">${esc(word)}</text>`;
   return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/>${body}</svg>`);
+}
+
+// ---------- Auto-Szenen: ausführliche Infoseiten und Übergänge ----------
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const barLine = (c: Col, x: number, y: number, w: number, h: number, f: number) =>
+  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="${c.tint}"/><rect x="${x}" y="${y}" width="${Math.max(h, w * Math.min(1, Math.max(0, f)))}" height="${h}" rx="${h / 2}" fill="${c.main}"/>`;
+const dayOfYear = (d: Date) => Math.floor((+new Date(d.getFullYear(), d.getMonth(), d.getDate()) - +new Date(d.getFullYear(), 0, 0)) / 864e5);
+const daysInYear = (y: number) => ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365);
+
+/** Mondphase als Anteil 0..1 (0 Neumond, 0.5 Vollmond), aus der mittleren synodischen Periode. */
+export function moonAge(d: Date) { const days = (+d / 864e5) - 10962.7597; const syn = 29.530588853; return (((days % syn) + syn) % syn) / syn; }
+function moonShape(c: Col, f: number, cx: number, cy: number, r: number) {
+  const th = 2 * Math.PI * f, k = Math.cos(th), rx = Math.abs(k) * r, waxing = f < 0.5;
+  let o = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c.tint}" stroke="${c.muted}" stroke-opacity=".5" stroke-width="1"/>`;
+  const lit = `M${cx} ${cy - r}A${r} ${r} 0 0 1 ${cx} ${cy + r}A${rx.toFixed(2)} ${r} 0 0 ${k < 0 ? 1 : 0} ${cx} ${cy - r}Z`;
+  if (Math.min(f, 1 - f) > 0.01) o += `<path d="${lit}" fill="${c.main}"${waxing ? "" : ` transform="translate(${2 * cx} 0) scale(-1 1)"`}/>`;
+  return o;
+}
+function moonName(f: number) {
+  const n = [T("Neumond", "New moon"), T("Zunehmende Sichel", "Waxing crescent"), T("Erstes Viertel", "First quarter"), T("Zunehmender Mond", "Waxing gibbous"), T("Vollmond", "Full moon"), T("Abnehmender Mond", "Waning gibbous"), T("Letztes Viertel", "Last quarter"), T("Abnehmende Sichel", "Waning crescent")];
+  return n[Math.floor(f * 8 + 0.5) % 8];
+}
+
+export const scene = {
+  clock(c: Col, d: Date, seasonLabel: string) {
+    const f = (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400;
+    return t(12, 34, 30, c.text, `${pad2(d.getHours())}:${pad2(d.getMinutes())}`, "start") + t(98, 34, 13, c.muted, pad2(d.getSeconds()), "start", "normal") +
+      t(220, 21, 13, c.main, `${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`, "end") + t(220, 35, 10.5, c.muted, `${T("KW", "Wk")} ${isoWeek(d)} · ${seasonLabel}`, "end", "normal") +
+      barLine(c, 12, 42, 208, 3, f);
+  },
+  season(c: Col, season: SeasonKey, d: Date, img: string) {
+    const p = seasonProgress(d), next = SEASON_LABEL[p.next];
+    return (img ? image(img, 8, 7, 32) : glyph(season, 10, 9, 24, c.main, 1.8)) + t(48, 21, 16, c.text, SEASON_LABEL[season], "start") + t(222, 21, 13, c.main, `${Math.round(p.fraction * 100)} %`, "end") +
+      t(48, 35, 10.5, c.muted, T(`noch ${p.daysLeft} Tage bis ${next}`, `${p.daysLeft} days to ${next}`), "start", "normal") + barLine(c, 48, 42, 174, 4, p.fraction);
+  },
+  year(c: Col, d: Date) {
+    const f = moonAge(d), ill = Math.round(((1 - Math.cos(2 * Math.PI * f)) / 2) * 100), n = daysInYear(d.getFullYear()), doy = dayOfYear(d);
+    return moonShape(c, f, 24, 24, 14) + t(48, 21, 14, c.text, moonName(f), "start") + t(222, 21, 12, c.main, `${d.getFullYear()} · ${Math.round((doy / n) * 100)} %`, "end") +
+      t(48, 35, 10.5, c.muted, T(`${ill} % beleuchtet · Tag ${doy}/${n}`, `${ill} % lit · day ${doy}/${n}`), "start", "normal") + barLine(c, 48, 42, 174, 4, doy / n);
+  },
+  countdown(c: Col, label: string, target: Date, d: Date) {
+    const days = Math.ceil((+target - +new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    const big = days > 0 ? String(days) : days === 0 ? T("heute", "today") : T("vorbei", "over");
+    const sub = days > 0 ? (days === 1 ? T("Tag", "day") : T("Tage", "days")) : "";
+    return t(14, 36, 32, c.main, big, "start") + (sub ? t(14 + 17 * big.length + 8, 36, 13, c.muted, sub, "start", "normal") : "") + t(222, 24, 15, c.text, label || "Countdown", "end") +
+      t(222, 38, 10.5, c.muted, `${target.getDate()}. ${MONTHS[target.getMonth()]} ${target.getFullYear()}`, "end", "normal");
+  },
+  timer(c: Col, phase: string, left: number, total: number) {
+    const f = total > 0 ? Math.min(1, Math.max(0, 1 - left / total)) : 0, lab = phase === "work" ? T("Lernzeit", "Study") : phase === "break" ? T("Pause", "Break") : T("Bereit", "Ready");
+    return t(14, 35, 30, c.text, phase === "idle" ? "--:--" : `${pad2(Math.floor(left / 60))}:${pad2(left % 60)}`, "start") + t(222, 24, 15, c.main, lab, "end") + barLine(c, 118, 33, 104, 5, f);
+  },
+  value(c: Col, label: string, value: string, unit: string) {
+    const v = value.length > 9 ? value.slice(0, 9) : value;
+    return t(14, 36, v.length > 6 ? 24 : 32, c.main, v, "start") + (unit ? t(14 + (v.length > 6 ? 12 : 16) * v.length + 6, 36, 13, c.muted, unit, "start", "normal") : "") + t(222, 31, 14, c.text, label, "end");
+  },
+};
+
+/** Ein Übergangsbild aus zwei Szenen. p läuft von 0 bis 1. */
+export function transition(c: Col, a: string, b: string, p: number, mode: string): string {
+  const u = bgLayer(c, BG);
+  const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  if (mode === "fade") return bar(c, `<g opacity="${(1 - e).toFixed(3)}">${a}</g><g opacity="${e.toFixed(3)}">${b}</g>`, u);
+  if (mode === "rise") return bar(c, `<g transform="translate(0 ${(-47 * e).toFixed(2)})" opacity="${(1 - e).toFixed(3)}">${a}</g><g transform="translate(0 ${(47 * (1 - e)).toFixed(2)})" opacity="${e.toFixed(3)}">${b}</g>`, u);
+  return bar(c, `<g transform="translate(${(-232 * e).toFixed(2)} 0)">${a}</g><g transform="translate(${(232 * (1 - e)).toFixed(2)} 0)">${b}</g>`, u);
+}
+/** Hintergrund hinter den Auto-Szenen: schlicht, Bögen, Lichtschein, feine Linien oder Punkte. */
+export function bgLayer(c: Col, style: string): string {
+  switch (style) {
+    case "wallpaper": return wallBarSvg();
+    case "arches": return `<g opacity=".3">${arches(c, 232, 50, 12, 9, -1)}</g>`;
+    case "glow": return `<defs><radialGradient id="gA" cx="1" cy="0" r="1"><stop offset="0" stop-color="${c.main}" stop-opacity=".26"/><stop offset="1" stop-color="${c.main}" stop-opacity="0"/></radialGradient><radialGradient id="gB" cx="0" cy="1" r="0.8"><stop offset="0" stop-color="${c.main}" stop-opacity=".14"/><stop offset="1" stop-color="${c.main}" stop-opacity="0"/></radialGradient></defs><rect width="232" height="50" fill="url(#gA)"/><rect width="232" height="50" fill="url(#gB)"/>`;
+    case "lines": return `<defs><pattern id="gL" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="1.3" height="9" fill="${c.muted}" opacity=".13"/></pattern></defs><rect width="232" height="50" fill="url(#gL)"/>`;
+    case "dots": return `<defs><pattern id="gD" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="1" fill="${c.muted}" opacity=".2"/></pattern></defs><rect width="232" height="50" fill="url(#gD)"/>`;
+  }
+  return "";
+}
+export const sceneBar = (c: Col, inner: string) => bar(c, inner);
+
+/** Hintergrund für 144×144-Tasten, etwas größer gemustert als in der Infobar. */
+export function bgLayerKey(c: Col, style: string): string {
+  switch (style) {
+    case "arches": return `<g opacity=".3">${arches(c, 144, 144, 4, 22, -1)}</g>`;
+    case "glow": return `<defs><radialGradient id="kA" cx="1" cy="0" r="1"><stop offset="0" stop-color="${c.main}" stop-opacity=".3"/><stop offset="1" stop-color="${c.main}" stop-opacity="0"/></radialGradient><radialGradient id="kB" cx="0" cy="1" r="0.9"><stop offset="0" stop-color="${c.main}" stop-opacity=".16"/><stop offset="1" stop-color="${c.main}" stop-opacity="0"/></radialGradient></defs><rect width="144" height="144" fill="url(#kA)"/><rect width="144" height="144" fill="url(#kB)"/>`;
+    case "lines": return `<defs><pattern id="kL" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="1.8" height="12" fill="${c.muted}" opacity=".13"/></pattern></defs><rect width="144" height="144" fill="url(#kL)"/>`;
+    case "dots": return `<defs><pattern id="kD" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1.4" fill="${c.muted}" opacity=".2"/></pattern></defs><rect width="144" height="144" fill="url(#kD)"/>`;
+  }
+  return "";
+}
+/** Taste mit gewähltem Deck-Hintergrund: Symbol aus der Maske in Textfarbe, Akzentstrich unten (wie die Kacheln des Icon-Pakets). */
+export function bgKey(c: Col, mask: string, col = 0, row = 0) {
+  const wall = BG === "wallpaper";
+  const glyphSvg = tinted(mask, 30, 22, 84, c.text);
+  const shadow = wall ? `<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="${c.bg}" flood-opacity=".75"/></filter></defs><g filter="url(#sh)">${glyphSvg}</g>` : glyphSvg;
+  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/>${wall ? wallKeySvg(col, row) : bgLayerKey(c, BG)}${wall ? "" : `<rect width="144" height="6" fill="${c.main}"/>`}${shadow}<rect x="52" y="124" width="40" height="5" rx="2.5" fill="${c.main}"/></svg>`);
+}
+
+// ---------- Deck-Hintergrund: ein Bild über alle Tasten und die Infobar ----------
+export type WallSig = { season: SeasonKey; mode: "hell" | "dunkel"; style: string };
+let DECK = { cols: 4, rows: 2 };
+export const setDeck = (cols: number, rows: number) => { if (cols > 0 && rows > 0) DECK = { cols, rows }; };
+const WG = 40; // Abstand zwischen den Tasten im Gesamtbild
+function paneSize() { const W = DECK.cols * 144 + (DECK.cols - 1) * WG, Hk = DECK.rows * 144 + (DECK.rows - 1) * WG, Hb = Math.round((W * 50) / 232); return { W, Hk, Hb, H: Hk + WG + Hb }; }
+let WALL: { from: WallSig | null; to: WallSig; p: number; mode: string } = { from: null, to: { season: "standard", mode: "hell", style: "scene" }, p: 1, mode: "slide" };
+export const setWall = (w: typeof WALL) => { WALL = w; };
+export const getWallTo = () => WALL.to;
+const rng = (seed: number) => () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+let wallId = 0;
+/** Das Gesamtbild für eine Jahreszeit, Tageszeit und einen Stil, in den Maßen des ganzen Decks. */
+function wallGroup(sig: WallSig): string {
+  const c = (PAL as any)[sig.season][sig.mode] as Col, { W, H, Hk } = paneSize(), id = "w" + wallId++, night = sig.mode === "dunkel";
+  const r = rng(sig.season.length * 977 + (night ? 7 : 3));
+  let o = `<defs><linearGradient id="${id}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.bg}"/><stop offset="1" stop-color="${c.tint}"/></linearGradient><radialGradient id="${id}s"><stop offset="0" stop-color="${night ? c.text : c.muted}" stop-opacity="${night ? 0.55 : 0.3}"/><stop offset="1" stop-color="${night ? c.text : c.muted}" stop-opacity="0"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#${id}b)"/>`;
+  if (sig.style === "waves") {
+    for (let k = 0; k < 4; k++) {
+      const y0 = H * (0.35 + k * 0.17), amp = 26 + k * 8, ph = r() * 6; let d = `M0 ${H}V${y0}`;
+      for (let x = 0; x <= W + 20; x += 20) d += `L${x} ${(y0 + Math.sin(x / (110 + k * 30) + ph) * amp).toFixed(1)}`;
+      o += `<path d="${d}V${H}Z" fill="${c.main}" fill-opacity="${(0.07 + k * 0.06).toFixed(2)}"/>`;
+    }
+    return o;
+  }
+  const sx = W * 0.74, sy = Hk * 0.3;
+  o += `<circle cx="${sx}" cy="${sy}" r="${night ? 130 : 170}" fill="url(#${id}s)"/><circle cx="${sx}" cy="${sy}" r="${night ? 46 : 60}" fill="${night ? c.text : c.muted}" fill-opacity="${night ? 0.9 : 0.4}"/>`;
+  if (night) for (let k = 0; k < 40; k++) o += `<circle cx="${(r() * W).toFixed(0)}" cy="${(r() * Hk * 0.8).toFixed(0)}" r="${(0.8 + r() * 1.4).toFixed(1)}" fill="${c.text}" fill-opacity="${(0.3 + r() * 0.5).toFixed(2)}"/>`;
+  const n = sig.season === "winter" ? 46 : sig.season === "standard" ? 0 : 28;
+  for (let k = 0; k < n; k++) {
+    const x = (r() * W).toFixed(0), y = (r() * H).toFixed(0), a = (r() * 180).toFixed(0), z = 0.6 + r() * 0.9;
+    if (sig.season === "winter") o += `<circle cx="${x}" cy="${y}" r="${(1.5 + r() * 2.6).toFixed(1)}" fill="${c.text}" fill-opacity="${(0.35 + r() * 0.4).toFixed(2)}"/>`;
+    else if (sig.season === "sommer") o += `<circle cx="${x}" cy="${y}" r="${(2 + r() * 3).toFixed(1)}" fill="${c.main}" fill-opacity="${(0.25 + r() * 0.3).toFixed(2)}"/>`;
+    else o += `<ellipse cx="${x}" cy="${y}" rx="${(7 * z).toFixed(1)}" ry="${(3.4 * z).toFixed(1)}" transform="rotate(${a} ${x} ${y})" fill="${c.main}" fill-opacity="${(0.3 + r() * 0.35).toFixed(2)}"/>`;
+  }
+  o += `<g transform="translate(0 ${H - 230})" opacity=".4">${arches(c, W, 230, 9, 120, -1)}</g><g transform="translate(0 ${H - 120})" opacity=".55">${arches(c, W, 120, 14, 56, -1)}</g>`;
+  return o;
+}
+/** Das Bild im Übergang: alt und neu zusammen, oder nur das neue. */
+function wallPane(): string {
+  const { W, H } = paneSize(), to = wallGroup(WALL.to);
+  if (!WALL.from || WALL.p >= 1 || WALL.mode === "none") return to;
+  const from = wallGroup(WALL.from), e = WALL.p < 0.5 ? 4 * WALL.p ** 3 : 1 - Math.pow(-2 * WALL.p + 2, 3) / 2;
+  if (WALL.mode === "fade") return `<g opacity="${(1 - e).toFixed(3)}">${from}</g><g opacity="${e.toFixed(3)}">${to}</g>`;
+  if (WALL.mode === "rise") return `<g transform="translate(0 ${(-H * e).toFixed(1)})">${from}</g><g transform="translate(0 ${(H * (1 - e)).toFixed(1)})">${to}</g>`;
+  return `<g transform="translate(${(-W * e).toFixed(1)} 0)">${from}</g><g transform="translate(${(W * (1 - e)).toFixed(1)} 0)">${to}</g>`;
+}
+function wallKeySvg(col: number, row: number) {
+  return `<svg x="0" y="0" width="144" height="144" viewBox="${col * (144 + WG)} ${row * (144 + WG)} 144 144">${wallPane()}</svg>`;
+}
+function wallBarSvg() {
+  const { W, Hk, Hb } = paneSize();
+  return `<svg x="0" y="0" width="232" height="50" viewBox="0 ${Hk + WG} ${W} ${Hb}">${wallPane()}</svg>`;
 }

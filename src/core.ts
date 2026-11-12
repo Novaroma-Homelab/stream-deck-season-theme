@@ -6,6 +6,8 @@ import { Pref, effective } from "./theme";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { PACK_GLYPHS } from "./packglyphs";
+import { setBg, getBg, bgKey, setWall, getWallTo, setDeck } from "./render";
+import type { WallSig } from "./render";
 
 const uriCache = new Map<string, string>();
 /** Name der Pack-Datei zu Jahreszeit, Thema und Symbol (relativ zum Plugin). */
@@ -21,7 +23,26 @@ export type Refresher = () => void | Promise<void>;
 const registry = new Map<string, Refresher>();
 export const register = (id: string, fn: Refresher) => { registry.set(id, fn); };
 export const unregister = (id: string) => { registry.delete(id); };
-export async function refreshAll() { for (const fn of [...registry.values()]) { try { await fn(); } catch (e) { streamDeck.logger.warn(String(e)); } } }
+const runAll = () => Promise.all([...registry.values()].map(async (fn) => { try { await fn(); } catch (e) { streamDeck.logger.warn(String(e)); } }));
+let wallKey = "", animating = false;
+const nap = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Beim Deck-Hintergrund: ändert sich Jahreszeit, Tageszeit oder Stil, gleitet das ganze Bild über alle Tasten in das neue. */
+async function wallCheck() {
+  if (getBg() !== "wallpaper") { wallKey = ""; return; }
+  const e = eff(), sig: WallSig = { season: e.season, mode: e.mode === "hell" ? "hell" : "dunkel", style: String(globals.wallStyle ?? "scene") }, key = JSON.stringify(sig);
+  if (key === wallKey) return;
+  const prev = wallKey ? getWallTo() : null, mode = String(globals.wallTransition ?? "slide"); wallKey = key;
+  if (!prev || mode === "none") { setWall({ from: null, to: sig, p: 1, mode }); return; }
+  animating = true;
+  try { for (let f = 1; f <= 6; f++) { setWall({ from: prev, to: sig, p: f / 6, mode }); await runAll(); await nap(120); } setWall({ from: null, to: sig, p: 1, mode }); }
+  finally { animating = false; }
+}
+export async function refreshAll() { if (animating) return; await wallCheck(); await runAll(); }
+/** Größe des Geräts merken, damit das Gesamtbild zur Tastenanordnung passt. */
+export function watchDevices() {
+  const upd = (d: any) => { if (d?.size) { setDeck(d.size.columns, d.size.rows); wallKey = ""; } };
+  try { streamDeck.devices.forEach(upd); streamDeck.devices.onDeviceDidConnect((ev: any) => { upd(ev.device); void refreshAll(); }); } catch (e) { streamDeck.logger.warn(String(e)); }
+}
 
 let pref: Pref = { season: "auto", theme: "auto" };
 export const getPref = () => pref;
@@ -30,7 +51,7 @@ export const eff = () => effective(pref);
 /** Alle globalen Einstellungen (Jahreszeit, Thema, Home Assistant). Wird immer zusammengeführt, nie überschrieben. */
 export let globals: Record<string, any> = {};
 function applyGlobals(g: Record<string, any>) {
-  globals = { ...g };
+  globals = { ...g }; setBg(String(g.background ?? "plain"));
   pref = { season: (g.season as Pref["season"]) ?? "auto", theme: (g.theme as Pref["theme"]) ?? "auto" };
 }
 export async function loadPref() {
@@ -58,4 +79,10 @@ export function packMask(glyph: string): string {
   const g = PACK_GLYPHS.includes(glyph) ? glyph : "star"; let u = maskCache.get(g);
   if (!u) { try { u = "data:image/png;base64," + readFileSync(fileURLToPath(new URL(`../imgs/mask/${g}.png`, import.meta.url))).toString("base64"); } catch { u = ""; } maskCache.set(g, u); }
   return u;
+}
+
+/** Bild für eine Taste mit Pack-Symbol: die Kachel des Icon-Pakets, oder bei gewähltem Deck-Hintergrund eine Taste mit Hintergrund. */
+export function tileImg(glyph: string, e = eff(), a?: any): string {
+  const co = a?.coordinates ?? { column: 0, row: 0 };
+  return getBg() === "plain" ? packFile(glyph, e) : bgKey(e.c, packMask(PACK_GLYPHS.includes(glyph) ? glyph : "star"), co.column ?? 0, co.row ?? 0);
 }

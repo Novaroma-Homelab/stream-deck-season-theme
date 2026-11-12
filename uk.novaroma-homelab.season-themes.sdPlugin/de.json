@@ -34,6 +34,10 @@
     "Name": "Infobar: Seiten und Uhr",
     "Tooltip": "Seitensymbole, optional mit Uhr"
   },
+  "uk.novaroma-homelab.season-themes.ib-scenes": {
+    "Name": "Infobar: Auto-Szenen",
+    "Tooltip": "Infoseiten wechseln selbst mit Übergang"
+  },
   "uk.novaroma-homelab.season-themes.ib-page": {
     "Name": "Infobar: Seitenname",
     "Tooltip": "Seitenname mit Punkten"
