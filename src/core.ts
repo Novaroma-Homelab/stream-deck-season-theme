@@ -6,7 +6,7 @@ import { Pref, effective } from "./theme";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { PACK_GLYPHS } from "./packglyphs";
-import { setBg, getBg, bgKey, setWall, getWallTo, setDeck } from "./render";
+import { setBg, getBg, bgKey, setWall, getWallTo, setDeck, setAnim, deckCount } from "./render";
 import type { WallSig } from "./render";
 
 const uriCache = new Map<string, string>();
@@ -25,11 +25,34 @@ export const register = (id: string, fn: Refresher) => { registry.set(id, fn); }
 export const unregister = (id: string) => { registry.delete(id); };
 const runAll = () => Promise.all([...registry.values()].map(async (fn) => { try { await fn(); } catch (e) { streamDeck.logger.warn(String(e)); } }));
 let wallKey = "", animating = false;
+/** Die vier Modi: tiles (Kacheln), clear (ohne Hintergrund), bg (Hintergrund), animated (bewegter Hintergrund). Alte Einstellung "background" wird weiter gelesen. */
+function lookOf(g: Record<string, any>): string {
+  if (g.look) return String(g.look);
+  const b = String(g.background ?? "plain");
+  return b === "plain" ? "tiles" : b === "clear" ? "clear" : "bg";
+}
+function bgOf(g: Record<string, any>): string {
+  const look = lookOf(g);
+  if (look === "tiles") return "plain";
+  if (look === "clear") return "clear";
+  if (look === "animated") return "wallpaper";
+  if (g.look) { const st = String(g.bgStyle ?? "scene"); return st === "scene" || st === "waves" ? "wallpaper" : st; }
+  return String(g.background ?? "plain");
+}
+function wallStyleOf(): string { const st = String(globals.bgStyle ?? globals.wallStyle ?? "scene"); return st === "waves" ? "waves" : "scene"; }
+let animT = 0, animTimer: ReturnType<typeof setInterval> | undefined;
+/** Bewegter Hintergrund: ein Schritt alle paar Sekunden (höchstens etwa 6 Bildaktualisierungen pro Sekunde, das Limit liegt bei 10). */
+function startAnim() {
+  if (animTimer) { clearInterval(animTimer); animTimer = undefined; }
+  if (lookOf(globals) !== "animated") { setAnim(0); return; }
+  const ms = Math.max(1500, deckCount() * 170);
+  animTimer = setInterval(() => { if (animating) return; animT = (animT + 1 / 48) % 1; setAnim(animT); void runAll(); }, ms);
+}
 const nap = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Beim Deck-Hintergrund: ändert sich Jahreszeit, Tageszeit oder Stil, gleitet das ganze Bild über alle Tasten in das neue. */
 async function wallCheck() {
   if (getBg() !== "wallpaper") { wallKey = ""; return; }
-  const e = eff(), sig: WallSig = { season: e.season, mode: e.mode === "hell" ? "hell" : "dunkel", style: String(globals.wallStyle ?? "scene") }, key = JSON.stringify(sig);
+  const e = eff(), sig: WallSig = { season: e.season, mode: e.mode === "hell" ? "hell" : "dunkel", style: wallStyleOf() }, key = JSON.stringify(sig);
   if (key === wallKey) return;
   const prev = wallKey ? getWallTo() : null, mode = String(globals.wallTransition ?? "slide"); wallKey = key;
   if (!prev || mode === "none") { setWall({ from: null, to: sig, p: 1, mode }); return; }
@@ -57,7 +80,7 @@ export const eff = () => effective(pref);
 /** Alle globalen Einstellungen (Jahreszeit, Thema, Home Assistant). Wird immer zusammengeführt, nie überschrieben. */
 export let globals: Record<string, any> = {};
 function applyGlobals(g: Record<string, any>) {
-  globals = { ...g }; setBg(String(g.background ?? "plain"));
+  globals = { ...g }; setBg(bgOf(g)); startAnim();
   pref = { season: (g.season as Pref["season"]) ?? "auto", theme: (g.theme as Pref["theme"]) ?? "auto" };
 }
 export async function loadPref() {

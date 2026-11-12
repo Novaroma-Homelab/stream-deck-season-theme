@@ -24,6 +24,10 @@ export function key(c: Col, g: string, label: string, badge = "", accent = c.mai
 /** Infobar 232×50. */
 /** Hintergrund für das ganze Deck, gilt für alle Tasten und Infobars (globale Einstellung). */
 let BG = "plain";
+let ANIM = 0;
+/** Phase der langsamen Bewegung (0 bis 1, ein Durchlauf). 0 = Standbild. */
+export const setAnim = (t: number) => { ANIM = t; };
+export const deckCount = () => DECK.cols * DECK.rows + 1;
 export const setBg = (style: string) => { BG = style || "plain"; };
 export const getBg = () => BG;
 export function bar(c: Col, inner: string, under?: string): string {
@@ -311,15 +315,16 @@ function wallGroup(sig: WallSig): string {
     }
     return o;
   }
-  const sx = W * 0.74, sy = Hk * 0.3;
+  const TT0 = 2 * Math.PI * ANIM, sx = W * 0.74, sy = Hk * 0.3;
   o += `<circle cx="${sx}" cy="${sy}" r="${night ? 130 : 170}" fill="url(#${id}s)"/><circle cx="${sx}" cy="${sy}" r="${night ? 46 : 60}" fill="${night ? c.text : c.muted}" fill-opacity="${night ? 0.9 : 0.4}"/>`;
-  if (night) for (let k = 0; k < 40; k++) o += `<circle cx="${(r() * W).toFixed(0)}" cy="${(r() * Hk * 0.8).toFixed(0)}" r="${(0.8 + r() * 1.4).toFixed(1)}" fill="${c.text}" fill-opacity="${(0.3 + r() * 0.5).toFixed(2)}"/>`;
+  if (night) for (let k = 0; k < 40; k++) { const sx2 = r() * W, sy2 = r() * Hk * 0.8, sr = 0.8 + r() * 1.4, so = 0.3 + r() * 0.5, tw = ANIM ? 0.6 + 0.4 * Math.sin(TT0 * (1 + (k % 2)) + k) : 1; o += `<circle cx="${sx2.toFixed(0)}" cy="${sy2.toFixed(0)}" r="${sr.toFixed(1)}" fill="${c.text}" fill-opacity="${(so * tw).toFixed(2)}"/>`; }
   const n = sig.season === "winter" ? 46 : sig.season === "standard" ? 0 : 28;
+  const TT = 2 * Math.PI * ANIM;
   for (let k = 0; k < n; k++) {
-    const x = (r() * W).toFixed(0), y = (r() * H).toFixed(0), a = (r() * 180).toFixed(0), z = 0.6 + r() * 0.9;
-    if (sig.season === "winter") o += `<circle cx="${x}" cy="${y}" r="${(1.5 + r() * 2.6).toFixed(1)}" fill="${c.text}" fill-opacity="${(0.35 + r() * 0.4).toFixed(2)}"/>`;
-    else if (sig.season === "sommer") o += `<circle cx="${x}" cy="${y}" r="${(2 + r() * 3).toFixed(1)}" fill="${c.main}" fill-opacity="${(0.25 + r() * 0.3).toFixed(2)}"/>`;
-    else o += `<ellipse cx="${x}" cy="${y}" rx="${(7 * z).toFixed(1)}" ry="${(3.4 * z).toFixed(1)}" transform="rotate(${a} ${x} ${y})" fill="${c.main}" fill-opacity="${(0.3 + r() * 0.35).toFixed(2)}"/>`;
+    let x = r() * W, y = r() * H; const a = r() * 180, z = 0.6 + r() * 0.9;
+    if (sig.season === "winter") { const rr = 1.5 + r() * 2.6, op = 0.35 + r() * 0.4; y = (y + ANIM * H) % H; x += 22 * Math.sin(TT + k); o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr.toFixed(1)}" fill="${c.text}" fill-opacity="${op.toFixed(2)}"/>`; }
+    else if (sig.season === "sommer") { const rr = 2 + r() * 3, op = 0.25 + r() * 0.3; y = ((y - ANIM * H * 0.6) % H + H) % H; x += 26 * Math.sin(TT + k); const tw = ANIM ? 0.55 + 0.45 * Math.sin(TT * 2 + k) : 1; o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr.toFixed(1)}" fill="${c.main}" fill-opacity="${(op * tw).toFixed(2)}"/>`; }
+    else { const op = 0.3 + r() * 0.35; y = (y + ANIM * H) % H; x += 40 * Math.sin(TT + k); const rot = a + ANIM * 360 * (k % 2 ? 1 : -1); o += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(7 * z).toFixed(1)}" ry="${(3.4 * z).toFixed(1)}" transform="rotate(${rot.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${c.main}" fill-opacity="${op.toFixed(2)}"/>`; }
   }
   o += `<g transform="translate(0 ${H - 230})" opacity=".4">${arches(c, W, 230, 9, 120, -1)}</g><g transform="translate(0 ${H - 120})" opacity=".55">${arches(c, W, 120, 14, 56, -1)}</g>`;
   return o;
