@@ -281,10 +281,10 @@ export function bgLayerKey(c: Col, style: string): string {
 }
 /** Taste mit gewähltem Deck-Hintergrund: Symbol aus der Maske in Textfarbe, Akzentstrich unten (wie die Kacheln des Icon-Pakets). */
 export function bgKey(c: Col, mask: string, col = 0, row = 0) {
-  const wall = BG === "wallpaper";
+  const wall = BG === "wallpaper", clear = BG === "clear";
   const glyphSvg = tinted(mask, 30, 22, 84, c.text);
-  const shadow = wall ? `<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="${c.bg}" flood-opacity=".75"/></filter></defs><g filter="url(#sh)">${glyphSvg}</g>` : glyphSvg;
-  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="${c.bg}"/>${wall ? wallKeySvg(col, row) : bgLayerKey(c, BG)}${wall ? "" : `<rect width="144" height="6" fill="${c.main}"/>`}${shadow}<rect x="52" y="124" width="40" height="5" rx="2.5" fill="${c.main}"/></svg>`);
+  const shadow = wall || clear ? `<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="${c.bg}" flood-opacity=".75"/></filter></defs><g filter="url(#sh)">${glyphSvg}</g>` : glyphSvg;
+  return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">${clear ? "" : `<rect width="144" height="144" fill="${c.bg}"/>`}${clear ? "" : wall ? wallKeySvg(col, row) : bgLayerKey(c, BG)}${wall || clear ? "" : `<rect width="144" height="6" fill="${c.main}"/>`}${shadow}<rect x="52" y="124" width="40" height="5" rx="2.5" fill="${c.main}"/></svg>`);
 }
 
 // ---------- Deck-Hintergrund: ein Bild über alle Tasten und die Infobar ----------

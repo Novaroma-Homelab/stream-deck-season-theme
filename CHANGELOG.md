@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Deck background "Transparent": keys draw only the symbol, so the Stream Deck app's own background image shows through.
 - Optional fixed icon colour (season and light/dark) in the global settings; the background and infobar keep following the automatic season.
 
 ## 1.0.0
