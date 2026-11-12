@@ -1,0 +1,298 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "uk.novaroma-homelab.season-themes",
+  "Name": "Novaroma Season Themes",
+  "Version": "1.0.0.0",
+  "Author": "JestingDart4369",
+  "Description": "Seasonal colour themes for your keys and the Stream Deck Neo infobar: follow or set the season, switch light and dark, launcher keys, study timer, clock, countdown, server status and page indicators.",
+  "Category": "Novaroma Season Themes",
+  "CategoryIcon": "imgs/category",
+  "Icon": "imgs/plugin",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 3,
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Software": {
+    "MinimumVersion": "7.6"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "13"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Actions": [
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.season",
+      "Name": "Season",
+      "Tooltip": "Cycle, set or follow the season",
+      "Icon": "imgs/actions/season",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/season"
+        }
+      ],
+      "PropertyInspectorPath": "ui/season.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.theme",
+      "Name": "Theme",
+      "Tooltip": "Switch between light, dark and automatic",
+      "Icon": "imgs/actions/theme",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/theme"
+        }
+      ],
+      "PropertyInspectorPath": "ui/theme.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.launcher",
+      "Name": "Launcher",
+      "Tooltip": "Open a link or app in the season colours",
+      "Icon": "imgs/actions/launcher",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/launcher"
+        }
+      ],
+      "PropertyInspectorPath": "ui/launcher.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.timer",
+      "Name": "Study Timer",
+      "Tooltip": "Study and break timer",
+      "Icon": "imgs/actions/timer",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/timer"
+        }
+      ],
+      "PropertyInspectorPath": "ui/timer.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.icon",
+      "Name": "Icon",
+      "Tooltip": "Show an icon in the season colours",
+      "Icon": "imgs/actions/icon",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/icon"
+        }
+      ],
+      "PropertyInspectorPath": "ui/icon.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ha-toggle",
+      "Name": "Home Assistant: Toggle",
+      "Tooltip": "Toggle an entity and show its state",
+      "Icon": "imgs/actions/ha-toggle",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/ha-toggle"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ha-toggle.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ha-service",
+      "Name": "Home Assistant: Service",
+      "Tooltip": "Call a service, scene or script",
+      "Icon": "imgs/actions/ha-service",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/states/ha-service"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ha-service.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-pages",
+      "Name": "Infobar: Pages & Clock",
+      "Tooltip": "Page icons with optional clock",
+      "Icon": "imgs/actions/ib-pages",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-pages"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-pages.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-page",
+      "Name": "Infobar: Page Name",
+      "Tooltip": "Page name with dots",
+      "Icon": "imgs/actions/ib-page",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-page"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-page.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-icon",
+      "Name": "Infobar: Icon & Text",
+      "Tooltip": "Icon with one or two lines",
+      "Icon": "imgs/actions/ib-icon",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-icon"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-icon.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-clock",
+      "Name": "Infobar: Clock",
+      "Tooltip": "Time, date and week",
+      "Icon": "imgs/actions/ib-clock",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-clock"
+        }
+      ]
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-season",
+      "Name": "Infobar: Season",
+      "Tooltip": "Season with progress",
+      "Icon": "imgs/actions/ib-season",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-season"
+        }
+      ]
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-homelab",
+      "Name": "Infobar: Server Status",
+      "Tooltip": "Reachability of your services",
+      "Icon": "imgs/actions/ib-homelab",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-homelab"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-homelab.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-countdown",
+      "Name": "Infobar: Countdown",
+      "Tooltip": "Days until a date",
+      "Icon": "imgs/actions/ib-countdown",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-countdown"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-countdown.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-timer",
+      "Name": "Infobar: Study Timer",
+      "Tooltip": "Progress of the study timer",
+      "Icon": "imgs/actions/ib-timer",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-timer"
+        }
+      ]
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-backdrop",
+      "Name": "Infobar: Backdrop",
+      "Tooltip": "Aqueduct backdrop in the season colours",
+      "Icon": "imgs/actions/ib-backdrop",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-backdrop"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-backdrop.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-text",
+      "Name": "Infobar: Text",
+      "Tooltip": "Custom text",
+      "Icon": "imgs/actions/ib-text",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-text"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-text.html"
+    },
+    {
+      "UUID": "uk.novaroma-homelab.season-themes.ib-banner",
+      "Name": "Infobar: Banner",
+      "Tooltip": "Text with arches",
+      "Icon": "imgs/actions/ib-banner",
+      "Controllers": [
+        "Neo"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/ib-banner"
+        }
+      ],
+      "PropertyInspectorPath": "ui/ib-banner.html"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "Name": "Novaroma Jahreszeiten-Themen",
+  "Description": "Jahreszeitliche Farbthemen für Tasten und die Infobar des Stream Deck Neo: Jahreszeit folgen oder festlegen, Hell und Dunkel, Starter, Lernzeit, Uhr, Countdown, Dienststatus und Seitenanzeiger.",
+  "Category": "Novaroma Jahreszeiten-Themen",
+  "uk.novaroma-homelab.season-themes.season": {
+    "Name": "Jahreszeit",
+    "Tooltip": "Jahreszeit weiterschalten, festlegen oder dem Kalender folgen"
+  },
+  "uk.novaroma-homelab.season-themes.theme": {
+    "Name": "Thema",
+    "Tooltip": "Hell, Dunkel oder automatisch"
+  },
+  "uk.novaroma-homelab.season-themes.launcher": {
+    "Name": "Starter",
+    "Tooltip": "Adresse oder App in den Farben der Jahreszeit"
+  },
+  "uk.novaroma-homelab.season-themes.timer": {
+    "Name": "Lernzeit",
+    "Tooltip": "Lernzeit und Pause"
+  },
+  "uk.novaroma-homelab.season-themes.icon": {
+    "Name": "Symbol",
+    "Tooltip": "Ein Symbol in den Farben der Jahreszeit"
+  },
+  "uk.novaroma-homelab.season-themes.ha-toggle": {
+    "Name": "Home Assistant: Schalten",
+    "Tooltip": "Entität schalten und Zustand anzeigen"
+  },
+  "uk.novaroma-homelab.season-themes.ha-service": {
+    "Name": "Home Assistant: Dienst",
+    "Tooltip": "Dienst, Szene oder Skript ausführen"
+  },
+  "uk.novaroma-homelab.season-themes.ib-pages": {
+    "Name": "Infobar: Seiten und Uhr",
+    "Tooltip": "Seitensymbole, optional mit Uhr"
+  },
+  "uk.novaroma-homelab.season-themes.ib-page": {
+    "Name": "Infobar: Seitenname",
+    "Tooltip": "Seitenname mit Punkten"
+  },
+  "uk.novaroma-homelab.season-themes.ib-icon": {
+    "Name": "Infobar: Symbol und Text",
+    "Tooltip": "Symbol mit ein oder zwei Zeilen"
+  },
+  "uk.novaroma-homelab.season-themes.ib-clock": {
+    "Name": "Infobar: Uhr",
+    "Tooltip": "Uhrzeit, Datum und Kalenderwoche"
+  },
+  "uk.novaroma-homelab.season-themes.ib-season": {
+    "Name": "Infobar: Jahreszeit",
+    "Tooltip": "Jahreszeit mit Fortschritt"
+  },
+  "uk.novaroma-homelab.season-themes.ib-homelab": {
+    "Name": "Infobar: Dienste",
+    "Tooltip": "Erreichbarkeit der Dienste"
+  },
+  "uk.novaroma-homelab.season-themes.ib-countdown": {
+    "Name": "Infobar: Countdown",
+    "Tooltip": "Tage bis zu einem Datum"
+  },
+  "uk.novaroma-homelab.season-themes.ib-timer": {
+    "Name": "Infobar: Lernzeit",
+    "Tooltip": "Fortschritt der Lernzeit"
+  },
+  "uk.novaroma-homelab.season-themes.ib-backdrop": {
+    "Name": "Infobar: Hintergrund",
+    "Tooltip": "Aquädukt-Hintergrund"
+  },
+  "uk.novaroma-homelab.season-themes.ib-text": {
+    "Name": "Infobar: Text",
+    "Tooltip": "Eigener Text"
+  },
+  "uk.novaroma-homelab.season-themes.ib-banner": {
+    "Name": "Infobar: Banner",
+    "Tooltip": "Text mit Bögen"
+  }
+}
