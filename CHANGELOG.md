@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Own setting "Infobar background" (follow the deck look, plain, arches, glow, lines, dots, picture). The infobar is not covered by the app background image, so "No background" gives it the season colour.
 - Deck look with four modes: tiles, no background, background, animated background. New field Background style. The old Deck background setting is still read.
 - Animated background: slow stepped motion (snow, leaves, petals, fireflies, twinkling stars), at most about 6 image updates per second.
 - Deck background "Transparent": keys draw only the symbol, so the Stream Deck app's own background image shows through.

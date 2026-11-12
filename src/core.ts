@@ -6,7 +6,7 @@ import { Pref, effective } from "./theme";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { PACK_GLYPHS } from "./packglyphs";
-import { setBg, getBg, bgKey, setWall, getWallTo, setDeck, setAnim, deckCount } from "./render";
+import { setBg, getBg, bgKey, setWall, getWallTo, setDeck, setAnim, deckCount, setBarBg, barKind } from "./render";
 import type { WallSig } from "./render";
 
 const uriCache = new Map<string, string>();
@@ -51,7 +51,7 @@ function startAnim() {
 const nap = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Beim Deck-Hintergrund: ändert sich Jahreszeit, Tageszeit oder Stil, gleitet das ganze Bild über alle Tasten in das neue. */
 async function wallCheck() {
-  if (getBg() !== "wallpaper") { wallKey = ""; return; }
+  if (getBg() !== "wallpaper" && barKind() !== "wallpaper") { wallKey = ""; return; }
   const e = eff(), sig: WallSig = { season: e.season, mode: e.mode === "hell" ? "hell" : "dunkel", style: wallStyleOf() }, key = JSON.stringify(sig);
   if (key === wallKey) return;
   const prev = wallKey ? getWallTo() : null, mode = String(globals.wallTransition ?? "slide"); wallKey = key;
@@ -80,7 +80,7 @@ export const eff = () => effective(pref);
 /** Alle globalen Einstellungen (Jahreszeit, Thema, Home Assistant). Wird immer zusammengeführt, nie überschrieben. */
 export let globals: Record<string, any> = {};
 function applyGlobals(g: Record<string, any>) {
-  globals = { ...g }; setBg(bgOf(g)); startAnim();
+  globals = { ...g }; setBg(bgOf(g)); setBarBg(String(g.barLook ?? "auto")); startAnim();
   pref = { season: (g.season as Pref["season"]) ?? "auto", theme: (g.theme as Pref["theme"]) ?? "auto" };
 }
 export async function loadPref() {

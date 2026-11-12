@@ -30,8 +30,12 @@ export const setAnim = (t: number) => { ANIM = t; };
 export const deckCount = () => DECK.cols * DECK.rows + 1;
 export const setBg = (style: string) => { BG = style || "plain"; };
 export const getBg = () => BG;
+let BARBG = "auto";
+/** Eigener Hintergrund der Infobar. auto = folgt dem Deck-Look; ohne Hintergrund (clear) gibt es dort nur die Jahreszeitenfarbe, weil die Infobar nicht auf dem App-Bild liegt. */
+export const setBarBg = (k: string) => { BARBG = k || "auto"; };
+export const barKind = () => (BARBG !== "auto" ? (BARBG === "plain" ? "" : BARBG) : BG === "clear" ? "" : BG);
 export function bar(c: Col, inner: string, under?: string): string {
-  if (under === undefined) under = bgLayer(c, BG);
+  if (under === undefined) under = bgLayer(c, barKind());
   return uri(`<svg xmlns="http://www.w3.org/2000/svg" width="232" height="50" viewBox="0 0 232 50"><rect width="232" height="50" fill="${c.bg}"/>${under}<rect width="232" height="3" fill="${c.main}"/>${inner}</svg>`);
 }
 export const t = (x: number, y: number, s: number, fill: string, text: string, anchor = "middle", w = "bold", ls = 0) =>
@@ -254,7 +258,7 @@ export const scene = {
 
 /** Ein Übergangsbild aus zwei Szenen. p läuft von 0 bis 1. */
 export function transition(c: Col, a: string, b: string, p: number, mode: string): string {
-  const u = bgLayer(c, BG);
+  const u = bgLayer(c, barKind());
   const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
   if (mode === "fade") return bar(c, `<g opacity="${(1 - e).toFixed(3)}">${a}</g><g opacity="${e.toFixed(3)}">${b}</g>`, u);
   if (mode === "rise") return bar(c, `<g transform="translate(0 ${(-47 * e).toFixed(2)})" opacity="${(1 - e).toFixed(3)}">${a}</g><g transform="translate(0 ${(47 * (1 - e)).toFixed(2)})" opacity="${e.toFixed(3)}">${b}</g>`, u);
