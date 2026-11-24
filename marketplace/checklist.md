@@ -2,7 +2,7 @@
 
 Done in the plugin
 - UUID `uk.novaroma-homelab.season-themes`, every action UUID starts with it
-- Plugin name `Novaroma Season Themes` (no "Plugin" or "Stream Deck"; Elgato recommends leaving out the organisation name, kept on purpose), category with the same name
+- Plugin name `Season Themes` (no organisation name, no "Plugin" or "Stream Deck"), category with the same name
 - Author is the alias JestingDart4369, no real name
 - 19 actions (allowed 2 to 30), every name 30 characters or fewer, tooltips set
 - Action and category icons are white SVG on transparent background
@@ -22,5 +22,5 @@ Still to do in the Maker Console
 - Description minimum 250 and maximum 1500 characters, first 250 characters plain text (done)
 - State the AI use (already in the description, keep it)
 - Add the repository and licence in Additional Links, plus a donation link only if you want one
-- Check that the name `Novaroma Season Themes` is free on the Marketplace
+- Check that the name `Season Themes` is free on the Marketplace
 - Test on a real Stream Deck Neo before submitting

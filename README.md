@@ -1,4 +1,4 @@
-# Novaroma Season Themes
+# Season Themes
 
 Stream Deck plugin with seasonal colour themes for keys and the Stream Deck Neo infobar.
 

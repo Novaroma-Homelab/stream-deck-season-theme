@@ -1,4 +1,4 @@
-Novaroma Season Themes gives your Stream Deck and the Stream Deck Neo infobar a seasonal look: four seasons, light and dark, one calm colour system. Follow the calendar or pick the season yourself.
+Season Themes gives your Stream Deck and the Stream Deck Neo infobar a seasonal look: four seasons, light and dark, one calm colour system. Follow the calendar or pick the season yourself.
 
 Features
 - Season and Theme keys: follow the calendar (light by day, dark by night) or lock a season
