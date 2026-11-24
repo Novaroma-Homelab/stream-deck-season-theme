@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-Novaroma Season Themes: a Stream Deck plugin (`uk.novaroma-homelab.season-themes`, SDK 3, Node 20, needs Stream Deck 7.6+, macOS 13+ or Windows 10+). It colours keys and the Stream Deck Neo infobar by season and light or dark, and adds launcher, study timer, Home Assistant keys, page indicators, auto scenes and a deck wallpaper. The companion pack with the icons lives in `stream-deck-icon-pack`.
+Roman Season Themes: a Stream Deck plugin (`uk.novaroma-homelab.season-themes`, SDK 3, Node 20, needs Stream Deck 7.6+, macOS 13+ or Windows 10+). It colours keys and the Stream Deck Neo infobar by season and light or dark, and adds launcher, study timer, Home Assistant keys, page indicators, auto scenes and a deck wallpaper. The companion pack with the icons lives in `stream-deck-icon-pack`.
 
 ## Layout
 
@@ -31,7 +31,7 @@ Run build, check and validate after every change. There is no test suite, so ver
 - Launcher opens only https, mailto, obsidian and vscode links and apps, never a shell or free command.
 - Home Assistant: the plugin calls only the URL the user enters. The token stays in the Stream Deck global settings. No secrets in code, logs or the repository.
 - Update `CHANGELOG.md` (under Unreleased) and keep `marketplace/checklist.md` and the descriptions true. The Marketplace description must stay between 250 and 1500 characters, the first 250 plain text, and keep the AI-use statement.
-- Do not change the UUID, the plugin name or the category name.
+- Do not change the UUID. The plugin and category name are "Roman Season Themes" (renamed after the first Marketplace review, which asked for a name without the organisation).
 
 ## Conventions
 

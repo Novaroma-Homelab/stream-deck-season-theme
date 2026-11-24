@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Renamed the plugin and its category to "Roman Season Themes" (Marketplace review asked for a name without the organisation). The UUID is unchanged.
 - Own setting "Infobar background" (follow the deck look, plain, arches, glow, lines, dots, picture). The infobar is not covered by the app background image, so "No background" gives it the season colour.
 - Deck look with four modes: tiles, no background, background, animated background. New field Background style. The old Deck background setting is still read.
 - Animated background: slow stepped motion (snow, leaves, petals, fireflies, twinkling stars), at most about 6 image updates per second.
