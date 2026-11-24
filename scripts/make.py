@@ -80,14 +80,14 @@ for id, n, tip, nd, tipd, ctrl, pi in ACT:
     a = {"UUID": f"{P}.{id}", "Name": n, "Tooltip": tip, "Icon": f"imgs/actions/{id}", "Controllers": [ctrl], "States": [{"Image": img}]}
     if pi: a["PropertyInspectorPath"] = f"ui/{id}.html"
     actions.append(a)
-manifest = {"$schema":"https://schemas.elgato.com/streamdeck/plugins/manifest.json","UUID":P,"Name":"Season Themes","Version":"1.0.0.0",
+manifest = {"$schema":"https://schemas.elgato.com/streamdeck/plugins/manifest.json","UUID":P,"Name":"Roman Season Themes","Version":"1.0.0.0",
  "Author":"JestingDart4369",
  "Description":"Seasonal colour themes for your keys and the Stream Deck Neo infobar: follow or set the season, switch light and dark, launcher keys, study timer, clock, countdown, server status and page indicators.",
- "Category":"Season Themes","CategoryIcon":"imgs/category","Icon":"imgs/plugin","CodePath":"bin/plugin.js","SDKVersion":3,
+ "Category":"Roman Season Themes","CategoryIcon":"imgs/category","Icon":"imgs/plugin","CodePath":"bin/plugin.js","SDKVersion":3,
  "Nodejs":{"Version":"20"},"Software":{"MinimumVersion":"7.6"},
  "OS":[{"Platform":"mac","MinimumVersion":"13"},{"Platform":"windows","MinimumVersion":"10"}],"Actions":actions}
 json.dump(manifest, open(f"{D}/manifest.json","w"), ensure_ascii=False, indent=2)
-de = {"Name":"Jahreszeiten-Themen","Description":"Jahreszeitliche Farbthemen für Tasten und die Infobar des Stream Deck Neo: Jahreszeit folgen oder festlegen, Hell und Dunkel, Starter, Lernzeit, Uhr, Countdown, Dienststatus und Seitenanzeiger.","Category":"Jahreszeiten-Themen"}
+de = {"Name":"Römische Jahreszeiten-Themen","Description":"Jahreszeitliche Farbthemen für Tasten und die Infobar des Stream Deck Neo: Jahreszeit folgen oder festlegen, Hell und Dunkel, Starter, Lernzeit, Uhr, Countdown, Dienststatus und Seitenanzeiger.","Category":"Römische Jahreszeiten-Themen"}
 for id, n, tip, nd, tipd, ctrl, pi in ACT: de[f"{P}.{id}"] = {"Name": nd, "Tooltip": tipd}
 json.dump(de, open(f"{D}/de.json","w"), ensure_ascii=False, indent=2)
 json.dump({"$schema":"https://schemas.elgato.com/streamdeck/plugins/layout.json","id":"neo","controller":"Neo","items":[{"key":"image","type":"pixmap","rect":[0,0,232,50]}]}, open(f"{D}/layouts/neo.json","w"), indent=2)
